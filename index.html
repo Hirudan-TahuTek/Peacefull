@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zayn's Safe Space 🍃</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        /* --- CSS UTAMA --- */
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #000; overflow: hidden;
+            font-family: 'Montserrat', sans-serif; height: 100vh; width: 100vw;
+        }
+
+        /* --- URUTAN LAYER (PENTING!) --- */
+        /* Layer 1 (Paling Belakang): FOTO BACKGROUND HD */
+        #bg-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            /* Foto Gunung & Danau yang Cantik */
+            background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
+            transition: filter 2s ease-in-out;
+            z-index: 1; /* Paling bawah */
+        }
+
+        /* Layer 2: PELANGI REALISTIS (Di depan foto) */
+        #rainbow {
+            position: absolute;
+            top: -25%; /* Posisi melengkung di atas */
+            left: 50%; transform: translateX(-50%);
+            width: 150%; height: 100%; /* Lebar agar lengkungan landai */
+            z-index: 2; /* DI ATAS BACKGROUND */
+            pointer-events: none; opacity: 0; /* Default sembunyi */
+            transition: opacity 3s ease; /* Muncul perlahan */
+            /* Blur tinggi agar warna menyatu realistis, bukan kartun */
+            filter: blur(60px);
+            /* Gradasi Warna Pelangi Transparan */
+            background: radial-gradient(
+                circle at 50% 120%,
+                transparent 50%, rgba(148,0,211,0.15) 53%, rgba(75,0,130,0.15) 56%,
+                rgba(0,0,255,0.15) 59%, rgba(0,255,0,0.15) 62%,
+                rgba(255,255,0,0.15) 65%, rgba(255,127,0,0.15) 68%,
+                rgba(255,0,0,0.15) 71%, transparent 75%
+            );
+        }
+
+        /* Layer 3: Overlay Gelap (Vignette) */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.5) 100%);
+            z-index: 3; pointer-events: none;
+        }
+
+        /* Layer 4: Canvas (Hujan & Riak Air) */
+        canvas {
+            position: absolute; top: 0; left: 0; z-index: 4; cursor: pointer;
+        }
+
+        /* Layer 5 (Paling Depan): UI & Teks */
+        #zen-text {
+            position: absolute; top: 15%; width: 100%; text-align: center;
+            color: rgba(255,255,255,0.95); font-size: 1.1rem; letter-spacing: 2px;
+            z-index: 10; pointer-events: none; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            opacity: 0; transition: opacity 2s ease; font-weight: 500;
+        }
+        #ui-layer {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 10; display: flex; gap: 20px;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            padding: 15px 30px; border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1); transition: opacity 0.5s;
+        }
+        .btn-control {
+            background: transparent; border: none; color: white; font-size: 1.8rem;
+            cursor: pointer; opacity: 0.6; transition: 0.3s;
+        }
+        .btn-control:hover, .btn-control.active {
+            opacity: 1; transform: scale(1.1); text-shadow: 0 0 15px rgba(255,255,255,0.8);
+        }
+
+        /* --- START SCREEN --- */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #080f12; z-index: 99; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; color: rgb(15, 179, 113); transition: opacity 1s;
+        }
+        .btn-start {
+            margin-top: 20px; padding: 12px 30px; border: 1px solid rgb(24, 238, 16);
+            background: transparent; color: white; border-radius: 30px; cursor: pointer;
+            font-family: 'Montserrat', sans-serif; letter-spacing: 2px; transition: 0.3s;
+        }
+        .btn-start:hover { background: rgb(11, 198, 133); color: black; box-shadow: 0 0 20px rgb(16, 204, 138); }
+    </style>
+</head>
+<body>
+
+    <audio id="audio-ambience" loop><source src="ambience.mp3" type="audio/mpeg"></audio>
+    <audio id="audio-rain" loop><source src="rain.mp3" type="audio/mpeg"></audio>
+    <audio id="audio-drop"><source src="drop.mp3" type="audio/mpeg"></audio>
+    <audio id="audio-night" loop><source src="night.mpeg" type="audio/mpeg"></audio>
+
+    <div id="start-screen">
+        <h1 style="font-weight: 300; margin-bottom: 10px;">ZAYN'S SPACE</h1>
+        <p style="font-size: 0.8rem; opacity: 0.7;">Headphones Recommended 🎧</p>
+        <button class="btn-start" onclick="enterWorld()">ENTER</button>
+    </div>
+
+    <div id="bg-container"></div> <div id="rainbow"></div>      <div class="overlay"></div>   <canvas id="canvas"></canvas> <div id="zen-text">Relax, Kiddo...</div> <div id="ui-layer" style="display: none;">
+        <button class="btn-control active" onclick="toggleAmbience()" title="Nature Sound">🍃</button>
+        <button class="btn-control" onclick="toggleRain()" title="Rain Mode">🌧️</button>
+        <button class="btn-control" onclick="toggleNight()" title="Night Mode">🌑</button>
+    </div>
+
+    <script>
+        // --- JAVASCRIPT SETUP ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        // Audio
+        const audioAmbience = document.getElementById('audio-ambience');
+        const audioRain = document.getElementById('audio-rain');
+        const audioDrop = document.getElementById('audio-drop');
+        const audioNight = document.getElementById('audio-night');
+        let isRainActive = false;
+        let isNightActive = false;
+        let rainbowTimeout;
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+
+        function enterWorld() {
+            const screen = document.getElementById('start-screen'); screen.style.opacity = 0;
+            setTimeout(() => {
+                screen.style.display = 'none'; document.getElementById('ui-layer').style.display = 'flex';
+                audioAmbience.volume = 0.4; audioAmbience.play().catch(e => {}); showZenQuote();
+            }, 1000);
+        }
+
+        // --- VISUAL EFFECTS (CANVAS) ---
+        const ripples = []; const rainDrops = [];
+        class Ripple {
+            constructor(x, y) { this.x = x; this.y = y; this.radius = 0; this.alpha = 0.8; this.lineWidth = 2; }
+            update() { this.radius += 2; this.alpha -= 0.015; this.lineWidth -= 0.02; }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.strokeStyle = `rgba(255,255,255,${this.alpha})`; ctx.lineWidth = Math.max(0.1, this.lineWidth); ctx.stroke(); }
+        }
+        class Rain {
+            constructor() { this.x = Math.random()*width; this.y = Math.random()*-height; this.speed = Math.random()*10+15; this.length = Math.random()*20+10; }
+            update() { this.y += this.speed; if(this.y > height) { this.y = Math.random()*-100; this.x = Math.random()*width; if(Math.random()>0.95) ripples.push(new Ripple(this.x, height)); }}
+            draw() { ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x, this.y+this.length); ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 1; ctx.stroke(); }
+        }
+        function animate() {
+            ctx.clearRect(0,0,width,height);
+            if(isRainActive) { if(rainDrops.length<150) rainDrops.push(new Rain()); rainDrops.forEach(d=> {d.update(); d.draw();}); } else { rainDrops.length=0; }
+            for(let i=0; i<ripples.length; i++) { ripples[i].update(); ripples[i].draw(); if(ripples[i].alpha<=0) {ripples.splice(i,1); i--;}}
+            requestAnimationFrame(animate);
+        }
+        animate();
+function createRipple(x, y) {
+    // 1. Visual Ripple
+    ripples.push(new Ripple(x, y));
+    setTimeout(() => ripples.push(new Ripple(x, y)), 200);
+
+    // 2. Audio Logic
+    if (audioDrop) {
+        // Clone node audio agar bisa bunyi barengan (polyphonic)
+        const sound = audioDrop.cloneNode(true);
+        sound.volume = 0.6; // Atur volume (0.0 sampai 1.0)
+        
+        // Mainkan suara
+        sound.play().catch(e => {
+            // Error handling jika browser memblokir audio (biasanya aman jika sudah klik ENTER)
+            console.log("Audio error:", e);
+        });
+
+        // Hapus elemen audio clone setelah selesai diputar agar memori tidak penuh
+        sound.onended = function() {
+            sound.remove();
+        };
+    }
+}       window.addEventListener('mousedown', e=>createRipple(e.clientX, e.clientY));
+        window.addEventListener('touchstart', e=>createRipple(e.touches[0].clientX, e.touches[0].clientY), {passive:true});
+
+        // --- CONTROLS SYSTEM ---
+        function toggleAmbience() {
+            const btn = document.querySelectorAll('.btn-control')[0];
+            if(audioAmbience.paused) { audioAmbience.play(); btn.classList.add('active'); btn.style.opacity=1; } else { audioAmbience.pause(); btn.classList.remove('active'); btn.style.opacity=0.5; }
+        }
+
+        // --- LOGIKA PELANGI DIPERBAIKI DI SINI ---
+        function toggleRain() {
+            isRainActive = !isRainActive;
+            const btn = document.querySelectorAll('.btn-control')[1];
+            const bg = document.getElementById('bg-container');
+            const rainbow = document.getElementById('rainbow'); // Ambil elemen pelangi
+
+            if (isRainActive) {
+                // HUJAN TURUN
+                audioRain.volume = 0.3; audioRain.play(); btn.classList.add('active');
+                if(!isNightActive) { bg.style.filter = "brightness(0.6) grayscale(0.4)"; }
+                changeQuote("Let the rain wash away everything...");
+                // Hapus pelangi seketika
+                rainbow.style.opacity = 0;
+                clearTimeout(rainbowTimeout);
+            } else {
+                // HUJAN BERHENTI
+                audioRain.pause(); btn.classList.remove('active');
+                if(!isNightActive) {
+                    bg.style.filter = "brightness(1) grayscale(0)";
+                    setTimeout(() => {
+                        rainbow.style.opacity = 0.7; // Ubah opacity agar terlihat
+                        changeQuote("I apologize there is no rainbow for you... 🌈");
+                        // Hilang setelah 15 detik
+                        rainbowTimeout = setTimeout(() => { rainbow.style.opacity = 0; }, 15000);
+                    }, 1000); // Delay 1 detik
+                } else {
+                    changeQuote("The rain has stopped. Peaceful night.");
+                }
+            }
+        }
+
+        function toggleNight() {
+    isNightActive = !isNightActive;
+    const btn = document.querySelectorAll('.btn-control')[2]; // Tombol Bulan
+    const btnAmbience = document.querySelectorAll('.btn-control')[0]; // Tombol Daun
+    const bg = document.getElementById('bg-container');
+    const rainbow = document.getElementById('rainbow');
+
+    if (isNightActive) {
+        // --- MASUK MODE MALAM ---
+        btn.classList.add('active');
+        
+        // 1. Visual Gelap
+        bg.style.filter = "brightness(0.2) contrast(1.1) grayscale(0.5) sepia(0.2)";
+        changeQuote("Good night, Zayn. 🌑");
+        rainbow.style.opacity = 0; // Sembunyikan pelangi
+
+        // 2. Audio Logic (Nyalakan Lagu Malam, Matikan Suara Hutan)
+        audioNight.volume = 0.5; // Volume lagu malam
+        audioNight.play();
+        
+        // Pause suara hutan biar gak tabrakan suaranya
+        audioAmbience.pause(); 
+        
+    } else {
+        // --- KEMBALI KE SIANG ---
+        btn.classList.remove('active');
+
+        // 1. Matikan Lagu Malam
+        audioNight.pause();
+        audioNight.currentTime = 0; // Reset lagu ke awal
+
+        // 2. Nyalakan Kembali Suara Hutan (Jika tombol daun tadi aktif)
+        // Kita cek apakah user sebelumnya menyalakan suara hutan?
+        // Jika tombol daun punya class 'active', kita nyalakan lagi
+        if (btnAmbience.classList.contains('active')) {
+            audioAmbience.play();
+        }
+
+        // 3. Visual Balik Terang
+        if (isRainActive) {
+            bg.style.filter = "brightness(0.6) grayscale(0.4)";
+            changeQuote("It's still raining...");
+        } else {
+            bg.style.filter = "brightness(1) grayscale(0)";
+            changeQuote("Good Morning! ☀️");
+        }
+    }
+}
+
+        // --- QUOTES ---
+        const quotes = ["You are the most respectful friend I’ve ever met", "Soft vibes only.", "Hiru was here.", "Relax your shoulders.", "Peaceful mind.", "Enjoy the view."];
+        function changeQuote(text) { const el = document.getElementById('zen-text'); el.style.opacity=0; setTimeout(()=>{el.innerText=text; el.style.opacity=1;}, 1000); }
+        function showZenQuote() { setInterval(()=>{ if(Math.random()>0.5) { changeQuote(quotes[Math.floor(Math.random()*quotes.length)]); }}, 15000); }
+    </script>
+</body>
+</html>
